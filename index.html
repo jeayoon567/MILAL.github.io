@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>밀알오락관 - 청년부 레크리에이션 게임</title>
+  <meta name="description" content="밀알 청년부를 위한 게임 위주의 퀴즈 및 오락관 웹앱">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <link rel="stylesheet" href="styles.css?v=20260613">
+</head>
+<body>
+  <!-- Confetti Canvas for celebration animations -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Header Section (Sticky/Persistent) -->
+  <header>
+    <div class="logo-container">
+      <div class="logo-badge">MILAL</div>
+      <h1 class="app-title">밀알오락관</h1>
+    </div>
+    <div class="header-controls">
+      <!-- Back to Menu button: only visible inside games -->
+      <button id="btn-goto-menu" class="btn-control" style="display: none;" aria-label="메인 메뉴로 이동">
+        <span>🏠</span>
+        <span>메인 메뉴</span>
+      </button>
+      <button id="btn-toggle-sound" class="btn-control" aria-label="음소거 토글">
+        <span id="sound-icon">🔊</span>
+        <span id="sound-label">소리 켬</span>
+      </button>
+      <button id="btn-reset-all" class="btn-control" aria-label="전체 게임 초기화">
+        <span>🔄</span>
+        <span>초기화</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN MENU VIEW (Launcher Dashboard) -->
+  <div id="main-menu-view" class="menu-container">
+    <div class="menu-hero">
+      <div class="logo-badge" style="margin: 0 auto 1rem;">MILAL GAME SHOW</div>
+      <h2 class="menu-main-title">밀알오락관</h2>
+      <p class="menu-subtitle">원하는 게임을 선택하여 플레이해보세요!</p>
+    </div>
+
+    <div class="menu-grid">
+      <!-- Card 1: Milal Quiz -->
+      <button id="card-launch-quiz" class="menu-card card-quiz" aria-label="밀알 퀴즈 시작">
+        <div class="menu-card-icon">💡</div>
+        <h3 class="menu-card-title">밀알 퀴즈</h3>
+        <p class="menu-card-desc">청년부 맞춤형 15개 퀴즈와 패자부활전이 포함되어 있습니다.</p>
+        <span class="menu-card-action">START ▶</span>
+      </button>
+
+      <!-- Card 2: Unison Game -->
+      <button id="card-launch-unison" class="menu-card card-unison" aria-label="이구동성 게임 시작">
+        <div class="menu-card-icon">🗣️</div>
+        <h3 class="menu-card-title">이구동성 게임</h3>
+        <p class="menu-card-desc">다섯 개의 글자를 동시에 외치면 그걸 보고 맞추는 게임입니다.</p>
+        <span class="menu-card-action">START ▶</span>
+      </button>
+
+      <!-- Card 3: Balloon Race -->
+      <button id="card-launch-race" class="menu-card card-race" aria-label="풍선 레이스 시작">
+        <div class="menu-card-icon">🎈</div>
+        <h3 class="menu-card-title">풍선 레이스</h3>
+        <p class="menu-card-desc">4개 팀이 경쟁하는 풍선 불기 레이스! 결승선에 먼저 도착하세요.</p>
+        <span class="menu-card-action">START ▶</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 1. MILAL QUIZ VIEW (Centered, Full-Width Layout) -->
+  <div id="quiz-view" class="game-view" style="display: none;">
+    <div class="game-container centered-layout">
+      <!-- Quiz Board Panel -->
+      <section class="quiz-board" aria-label="퀴즈 보드">
+        <div class="quiz-header">
+          <span id="quiz-badge-id" class="q-badge">QUESTION 01</span>
+          <div class="keyboard-hint">선택지를 클릭하고 정답 확인 버튼을 누르세요!</div>
+        </div>
+
+        <div id="quiz-card-content" class="quiz-content">
+          <p id="quiz-question-text" class="question-text">
+            질문 텍스트 로딩 중...
+          </p>
+
+          <div id="quiz-choices-container" class="choices-grid">
+            <!-- Dynamic choice buttons generated here -->
+          </div>
+
+          <div id="explanation-container" class="explanation-panel" style="display: none;">
+            <span class="explanation-title">정답 해설</span>
+            <p id="explanation-text" class="explanation-text"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Operations deck -->
+      <section class="deck-controls" aria-label="퀴즈 컨트롤">
+        <div class="deck-group">
+          <button id="btn-prev-question" class="btn-control" aria-label="이전 문제">
+            ◀ 이전
+          </button>
+          <button id="btn-next-question" class="btn-control" aria-label="다음 문제">
+            다음 ▶
+          </button>
+        </div>
+
+        <button id="btn-reveal-answer" class="btn-primary" aria-label="정답 확인" onclick="revealQuizAnswer()">
+          정답 확인
+        </button>
+
+        <div class="deck-group">
+          <button id="btn-play-drumroll" class="btn-control" aria-label="두구두구">
+            🥁 두구두구
+          </button>
+          <button id="btn-play-tada" class="btn-control" aria-label="빰빰">
+            🎉 빰빰!
+          </button>
+        </div>
+      </section>
+
+      <!-- Navigation Grid -->
+      <section class="nav-grid-panel" aria-label="퀴즈 네비게이션">
+        <div id="question-nav-dots" class="nav-dots">
+          <!-- Dots generated via JS -->
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- 2. UNISON GAME VIEW (이구동성) -->
+  <div id="unison-view" class="game-view" style="display: none;">
+    <div class="game-container centered-layout">
+
+      <!-- Unison Board Panel -->
+      <section class="quiz-board" style="min-height: 380px;" aria-label="이구동성 보드">
+        <div class="quiz-header">
+          <span id="unison-badge-id" class="q-badge">이구동성 01</span>
+          <div class="keyboard-hint">카드를 클릭해 글자를 공개하세요</div>
+        </div>
+
+        <div class="unison-word-container">
+          <div class="syllable-grid syllable-grid-5">
+            <!-- Giant Syllable Cards (1 to 5) -->
+            <div id="syllable-card-0" class="syllable-card" role="button" tabindex="0">
+              <div class="syllable-number">1</div>
+              <div class="syllable-char">?</div>
+            </div>
+            <div id="syllable-card-1" class="syllable-card" role="button" tabindex="0">
+              <div class="syllable-number">2</div>
+              <div class="syllable-char">?</div>
+            </div>
+            <div id="syllable-card-2" class="syllable-card" role="button" tabindex="0">
+              <div class="syllable-number">3</div>
+              <div class="syllable-char">?</div>
+            </div>
+            <div id="syllable-card-3" class="syllable-card" role="button" tabindex="0">
+              <div class="syllable-number">4</div>
+              <div class="syllable-char">?</div>
+            </div>
+            <div id="syllable-card-4" class="syllable-card" role="button" tabindex="0">
+              <div class="syllable-number">5</div>
+              <div class="syllable-char">?</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Operations deck -->
+      <section class="deck-controls" aria-label="이구동성 컨트롤">
+        <div class="deck-group">
+          <button id="btn-prev-unison" class="btn-control" aria-label="이전 단어">
+            ◀ 이전
+          </button>
+          <button id="btn-next-unison" class="btn-control" aria-label="다음 단어">
+            다음 ▶
+          </button>
+        </div>
+
+        <div class="deck-group">
+          <button id="btn-hide-all-syllables" class="btn-control">
+            🙈 모두 숨기기
+          </button>
+          <button id="btn-reveal-all-syllables" class="btn-control">
+            👁️ 전체 공개
+          </button>
+        </div>
+      </section>
+
+      <!-- Navigation Grid -->
+      <section class="nav-grid-panel" aria-label="이구동성 네비게이션">
+        <div id="unison-nav-dots" class="nav-dots">
+          <!-- Dots generated via JS -->
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- 3. BALLOON RACE VIEW -->
+  <div id="race-view" class="game-view" style="display: none;">
+    <!-- Victory Modal Panel -->
+    <div id="race-winner-modal" class="lobby-overlay" style="display: none; background: rgba(6, 4, 18, 0.95); z-index: 1000;">
+      <div class="logo-badge" style="background: var(--accent-gold); color: var(--bg-primary); box-shadow: 0 0 20px var(--accent-gold-glow);">VICTORY</div>
+      <h2 id="race-winner-name" class="lobby-title" style="font-size: 5rem; text-shadow: 0 0 40px rgba(0, 255, 136, 0.5);">빨강 팀 승리!</h2>
+      <p class="lobby-subtitle">축하합니다! 엄청난 속도로 풍선을 가장 먼저 불었습니다!</p>
+      <button id="btn-reset-race-winner" class="btn-start" style="background: linear-gradient(135deg, var(--accent-green), #00bb66); box-shadow: 0 8px 30px rgba(0, 255, 136, 0.3);">다시 하기</button>
+    </div>
+
+    <div class="game-container centered-layout">
+      <!-- Sub Tab Selectors inside Balloon Race -->
+      <div class="quiz-board" style="min-height: auto; padding: 1.25rem 2rem; margin-bottom: 0;">
+        <div class="unison-tabs">
+          <button id="btn-race-tab-bracket" class="btn-tab active-tab" aria-label="토너먼트 대진표 탭">
+            🏆 5팀 대진표
+          </button>
+          <button id="btn-race-tab-roulette" class="btn-tab" aria-label="룰렛 탭">
+            🎰 도구/신체 뽑기
+          </button>
+        </div>
+      </div>
+
+
+
+      <!-- Tab Content B: 5-Team Tournament Bracket Panel -->
+      <div id="race-bracket-pane" class="race-sub-pane">
+        <!-- Bracket Configurations & Views -->
+        <div class="quiz-board" style="min-height: 480px;">
+          <div class="quiz-header">
+            <span class="q-badge" style="background: rgba(255, 0, 127, 0.1); color: var(--color-team-b); border-color: rgba(255, 0, 127, 0.25);">5팀 토너먼트 대진표</span>
+            <div class="keyboard-hint">팀 이름을 입력하고 부전승 및 승리팀을 클릭하세요!</div>
+          </div>
+
+          <!-- Team Names Configuration inputs -->
+          <div class="bracket-names-editor">
+            <h4 class="editor-title">팀 이름 설정 (5개 팀) <span style="font-size:0.75rem;color:var(--text-muted);font-weight:400;">← 스크롤 →</span></h4>
+            <div class="names-grid-scroll">
+              <div class="names-grid">
+                <div class="name-input-group">
+                  <label for="input-team-0">팀 1</label>
+                  <input type="text" id="input-team-0" class="input-bracket-name" value="밀 팀">
+                </div>
+                <div class="name-input-group">
+                  <label for="input-team-1">팀 2</label>
+                  <input type="text" id="input-team-1" class="input-bracket-name" value="알 팀">
+                </div>
+                <div class="name-input-group">
+                  <label for="input-team-2">팀 3</label>
+                  <input type="text" id="input-team-2" class="input-bracket-name" value="오락 팀">
+                </div>
+                <div class="name-input-group">
+                  <label for="input-team-3">팀 4</label>
+                  <input type="text" id="input-team-3" class="input-bracket-name" value="관 팀">
+                </div>
+                <div class="name-input-group">
+                  <label for="input-team-4">팀 5</label>
+                  <input type="text" id="input-team-4" class="input-bracket-name" value="청년 팀">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bracket Tree Grid -->
+          <div class="bracket-tree-scroll">
+          <div class="bracket-tree-container">
+            <!-- 1. Quarterfinals (8강/4강 진입) -->
+            <div class="bracket-column">
+              <h5 class="bracket-round-title">1라운드 (예선)</h5>
+              
+              <!-- Match 1 Card -->
+              <div id="bracket-match-1" class="match-card">
+                <div class="match-card-header">매치 1</div>
+                <div id="b-team-m1-a" class="match-node">
+                  <span class="node-name">팀 1</span>
+                  <button class="btn-action-win" data-match="1" data-side="A">승리</button>
+                </div>
+                <div class="match-divider">VS</div>
+                <div id="b-team-m1-b" class="match-node">
+                  <span class="node-name">팀 2</span>
+                  <button class="btn-action-win" data-match="1" data-side="B">승리</button>
+                </div>
+              </div>
+
+              <!-- Match 2 Card -->
+              <div id="bracket-match-2" class="match-card">
+                <div class="match-card-header">매치 2</div>
+                <div id="b-team-m2-a" class="match-node">
+                  <span class="node-name">팀 3</span>
+                  <button class="btn-action-win" data-match="2" data-side="A">승리</button>
+                </div>
+                <div class="match-divider">VS</div>
+                <div id="b-team-m2-b" class="match-node">
+                  <span class="node-name">팀 4</span>
+                  <button class="btn-action-win" data-match="2" data-side="B">승리</button>
+                </div>
+              </div>
+
+              <!-- Round 1 Bye Slot Info -->
+              <div class="bracket-info-card">
+                <div class="match-card-header" style="background: rgba(255, 215, 0, 0.1); color: var(--accent-gold);">부전승 후보 지정</div>
+                <div class="bye-designator-grid">
+                  <button class="btn-designate-bye" data-round="1" data-team="0">1번</button>
+                  <button class="btn-designate-bye" data-round="1" data-team="1">2번</button>
+                  <button class="btn-designate-bye" data-round="1" data-team="2">3번</button>
+                  <button class="btn-designate-bye" data-round="1" data-team="3">4번</button>
+                  <button class="btn-designate-bye active" data-round="1" data-team="4">5번</button>
+                </div>
+                <p class="bye-tip">* 부전승 팀은 2라운드로 직행합니다.</p>
+              </div>
+            </div>
+
+            <!-- Connector SVG -->
+            <div class="bracket-connectors">
+              <svg width="100%" height="100%" viewBox="0 0 100 400" preserveAspectRatio="none">
+                <!-- Match 1 to Match 3 -->
+                <path d="M 0,90 L 50,90 L 50,140 L 100,140" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2" />
+                <!-- Match 2 to Match 3 -->
+                <path d="M 0,240 L 50,240 L 50,190 L 100,190" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2" />
+                <!-- Round 1 Bye to Semis/Finals -->
+                <path d="M 0,335 L 100,335" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2" />
+              </svg>
+            </div>
+
+            <!-- 2. Semifinals (4강/준결승) -->
+            <div class="bracket-column">
+              <h5 class="bracket-round-title">2라운드 (준결승)</h5>
+
+              <!-- Match 3 Card -->
+              <div id="bracket-match-3" class="match-card" style="margin-top: 50px;">
+                <div class="match-card-header">매치 3 (준결승)</div>
+                <div id="b-team-m3-a" class="match-node">
+                  <span class="node-name">1라운드 승자 1</span>
+                  <button class="btn-action-win" data-match="3" data-side="A">승리</button>
+                </div>
+                <div class="match-divider">VS</div>
+                <div id="b-team-m3-b" class="match-node">
+                  <span class="node-name">1라운드 승자 2</span>
+                  <button class="btn-action-win" data-match="3" data-side="B">승리</button>
+                </div>
+              </div>
+
+              <!-- Round 2 Bye slot -->
+              <div class="match-card match-card-bye" style="margin-top: 50px;">
+                <div class="match-card-header" style="background: rgba(255, 215, 0, 0.15); color: var(--accent-gold);">2라운드 부전승</div>
+                <div id="b-team-m4-b" class="match-node match-node-bye">
+                  <span class="node-name">부전승 대기 중</span>
+                </div>
+                <div class="bye-designator-grid" style="padding: 0.5rem; border-top: 1px solid var(--glass-border);">
+                  <button class="btn-designate-bye" data-round="2" data-slot="0">슬롯 A</button>
+                  <button class="btn-designate-bye" data-round="2" data-slot="1">슬롯 B</button>
+                  <button class="btn-designate-bye active" data-round="2" data-slot="2">부전승(C)</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Connector SVG -->
+            <div class="bracket-connectors">
+              <svg width="100%" height="100%" viewBox="0 0 100 400" preserveAspectRatio="none">
+                <!-- Match 3 to Finals -->
+                <path d="M 0,165 L 50,165 L 50,200 L 100,200" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2" />
+                <!-- Round 2 Bye to Finals -->
+                <path d="M 0,335 L 50,335 L 50,260 L 100,260" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2" />
+              </svg>
+            </div>
+
+            <!-- 3. Finals & Champion (결승 및 우승) -->
+            <div class="bracket-column">
+              <h5 class="bracket-round-title">결승 & 우승</h5>
+
+              <!-- Match 4 Card (Finals) -->
+              <div id="bracket-match-4" class="match-card" style="margin-top: 110px;">
+                <div class="match-card-header" style="background: linear-gradient(135deg, var(--color-team-a), var(--color-team-b)); color: white;">FINAL 결승전</div>
+                <div id="b-team-m4-a" class="match-node">
+                  <span class="node-name">결승 진출자 A</span>
+                  <button class="btn-action-win" data-match="4" data-side="A">승리</button>
+                </div>
+                <div class="match-divider">VS</div>
+                <div id="b-team-m4-c" class="match-node">
+                  <span class="node-name">결승 진출자 B</span>
+                  <button class="btn-action-win" data-match="4" data-side="B">승리</button>
+                </div>
+              </div>
+
+              <!-- Champion Board -->
+              <div id="bracket-champion" class="champion-card">
+                <div class="champion-trophy">🏆</div>
+                <div class="champion-label">CHAMPION</div>
+                <div id="bracket-champion-name" class="champion-team-name">???</div>
+              </div>
+            </div>
+          </div><!-- /.bracket-tree-container -->
+          </div><!-- /.bracket-tree-scroll -->
+        </div>
+
+        <div class="deck-controls">
+          <button id="btn-reset-bracket" class="btn-primary" style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); color: white; box-shadow: none;">
+            🔄 대진표 전체 초기화
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab Content B: Item Picker - Clean Single Reel -->
+      <div id="race-roulette-pane" class="race-sub-pane" style="display: none;">
+        <div class="quiz-board roulette-board">
+          <div class="quiz-header" style="width: 100%;">
+            <span class="q-badge" style="background: rgba(100, 220, 255, 0.1); color: var(--color-team-a); border-color: rgba(100, 220, 255, 0.25);">🎲 도구/신체 뽑기</span>
+            <div class="keyboard-hint">버튼을 눌러 랜덤으로 뽑으세요! [Space]</div>
+          </div>
+
+          <!-- Single Reel Picker -->
+          <div class="picker-frame">
+            <div class="picker-reel-wrap">
+              <!-- Top fade -->
+              <div class="picker-fade picker-fade-top"></div>
+              <!-- Center selection indicator -->
+              <div class="picker-center-bar"></div>
+              <!-- The scrolling strip -->
+              <div id="reel-tool" class="picker-strip"></div>
+              <!-- Bottom fade -->
+              <div class="picker-fade picker-fade-bottom"></div>
+            </div>
+          </div>
+
+          <!-- Result display -->
+          <div id="roulette-result-display" class="picker-result" style="opacity:0;"></div>
+
+          <button id="btn-spin-roulette" class="btn-start" style="padding: 1.1rem 3.5rem; font-size: 1.5rem;">
+            🎲 뽑기!
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=20260613"></script>
+</body>
+</html>
