@@ -103,6 +103,8 @@ h1.app-title {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: -0.5px;
+  isolation: isolate;
+  transform: translateZ(0);
 }
 
 .header-controls {
@@ -122,15 +124,19 @@ h1.app-title {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 0.25s ease,
+              border-color 0.25s ease;
   font-family: var(--font-sans);
   font-size: 0.9rem;
+  will-change: transform;
 }
 
 .btn-control:hover {
   background: var(--glass-border-hover);
   border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
+  transform: translateY(-2px) translateZ(0);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
@@ -174,7 +180,8 @@ h1.app-title {
   background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 0.75rem;
-  text-shadow: 0 0 25px rgba(255,255,255,0.05);
+  isolation: isolate;
+  transform: translateZ(0);
 }
 
 .menu-subtitle {
@@ -208,11 +215,16 @@ h1.app-title {
   flex-direction: column;
   align-items: center;
   gap: 1.2rem;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.35s ease,
+              border-color 0.35s ease,
+              background-color 0.35s ease;
   position: relative;
   overflow: hidden;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .menu-card::before {
@@ -222,7 +234,7 @@ h1.app-title {
   left: 0;
   width: 100%;
   height: 4px;
-  transition: all 0.4s ease;
+  transition: opacity 0.4s ease;
 }
 
 /* Card custom lights */
@@ -284,7 +296,7 @@ h1.app-title {
   border-radius: 30px;
   margin-top: 0.5rem;
   border: 1px solid var(--glass-border);
-  transition: all 0.3s ease;
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
 }
 .card-quiz:hover .menu-card-action { background: var(--color-team-a); color: var(--bg-primary); border-color: var(--color-team-a); }
 .card-unison:hover .menu-card-action { background: var(--color-team-b); color: var(--text-main); border-color: var(--color-team-b); }
@@ -322,7 +334,8 @@ h1.app-title {
   flex-direction: column;
   min-height: 440px;
   position: relative;
-  overflow: hidden;
+  overflow: visible; /* keep explanation panel unclipped */
+  isolation: isolate; /* prevent backdrop-filter from leaking to siblings */
 }
 
 .quiz-header {
@@ -401,10 +414,14 @@ h1.app-title {
   font-size: 1.15rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s ease,
+              border-color 0.25s ease,
+              background-color 0.25s ease;
   display: flex;
   align-items: center;
   gap: 1rem;
+  will-change: transform;
 }
 
 .choice-card:hover {
@@ -540,8 +557,10 @@ h1.app-title {
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s ease;
   font-family: var(--font-sans);
+  will-change: transform;
 }
 
 .btn-primary:hover {
@@ -565,9 +584,9 @@ h1.app-title {
 
 .nav-dots {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  justify-content: center;
+  flex-direction: column;
+  gap: 0.55rem;
+  align-items: center;
 }
 
 .nav-dot {
@@ -584,7 +603,12 @@ h1.app-title {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: transform 0.15s ease,
+              background-color 0.15s ease,
+              border-color 0.15s ease,
+              color 0.15s ease,
+              box-shadow 0.15s ease;
+  will-change: transform;
 }
 
 .nav-dot:hover {
@@ -634,7 +658,10 @@ h1.app-title {
   font-weight: 700;
   font-size: 1.1rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color 0.2s ease,
+              color 0.2s ease,
+              border-color 0.2s ease,
+              box-shadow 0.2s ease;
   font-family: var(--font-sans);
 }
 
@@ -673,6 +700,24 @@ h1.app-title {
   max-width: 750px;
 }
 
+.syllable-grid.syllable-grid-5 {
+  grid-template-columns: repeat(5, 1fr);
+  max-width: 850px;
+}
+
+@media (max-width: 700px) {
+  .syllable-grid.syllable-grid-5 {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+  .syllable-grid.syllable-grid-5 .syllable-card {
+    height: 130px;
+  }
+  .syllable-grid.syllable-grid-5 .syllable-char {
+    font-size: 2.8rem;
+  }
+}
+
 @media (max-width: 600px) {
   .syllable-grid {
     grid-template-columns: 1fr 1fr;
@@ -691,8 +736,12 @@ h1.app-title {
   justify-content: center;
   cursor: pointer;
   position: relative;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.3s ease,
+              box-shadow 0.3s ease,
+              background-color 0.3s ease;
   overflow: hidden;
+  will-change: transform;
 }
 
 .syllable-card:hover {
@@ -717,7 +766,7 @@ h1.app-title {
   font-weight: 900;
   color: var(--text-muted);
   text-shadow: 0 0 10px rgba(0,0,0,0.3);
-  transition: all 0.3s ease;
+  transition: color 0.3s ease, transform 0.3s ease, text-shadow 0.3s ease;
 }
 
 .syllable-card.revealed {
@@ -761,10 +810,13 @@ h1.app-title {
   font-weight: 800;
   color: var(--text-main);
   box-shadow: var(--glass-shadow);
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: border-color 0.3s ease,
+              box-shadow 0.3s ease,
+              background-color 0.3s ease;
   word-break: keep-all;
   text-align: center;
   padding: 1rem;
+  will-change: box-shadow, border-color;
 }
 
 .choice-left {
@@ -929,7 +981,9 @@ h1.app-title {
   border-radius: 10px;
   font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.15s ease,
+              border-color 0.15s ease,
+              transform 0.1s ease;
   font-family: var(--font-sans);
 }
 
@@ -974,7 +1028,8 @@ h1.app-title {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 30px rgba(255, 0, 127, 0.25);
+  isolation: isolate;
+  transform: translateZ(0);
 }
 
 .lobby-subtitle {
@@ -995,11 +1050,14 @@ h1.app-title {
   border-radius: 50px;
   cursor: pointer;
   box-shadow: 0 8px 30px rgba(255, 0, 127, 0.4);
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+              box-shadow 0.25s ease;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 .btn-start:hover {
-  transform: translateY(-4px) scale(1.05);
+  transform: translateY(-4px) scale(1.05) translateZ(0);
   box-shadow: 0 12px 40px rgba(0, 240, 255, 0.5);
 }
 
@@ -1093,7 +1151,7 @@ h1.app-title {
   font-size: 0.9rem;
   font-weight: 600;
   outline: none;
-  transition: all 0.3s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .input-bracket-name:focus {
@@ -1103,11 +1161,33 @@ h1.app-title {
 }
 
 /* Bracket Visual Grid Tree */
+/* Wrapper enables horizontal scroll on small screens, prevents border artifact */
+.bracket-tree-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.12) transparent;
+  padding-bottom: 6px; /* room for scrollbar */
+  /* negative margin trick: extend to edge of quiz-board padding, then re-pad */
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.bracket-tree-scroll::-webkit-scrollbar { height: 4px; }
+.bracket-tree-scroll::-webkit-scrollbar-track { background: transparent; }
+.bracket-tree-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.18);
+  border-radius: 4px;
+}
+
 .bracket-tree-container {
   display: flex;
   align-items: stretch;
   justify-content: space-between;
-  width: 100%;
+  min-width: 680px; /* enough for 3 columns + 2 connectors */
   margin-top: 1rem;
   gap: 0;
 }
@@ -1149,7 +1229,7 @@ h1.app-title {
   flex-direction: column;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .match-card:hover {
@@ -1176,7 +1256,7 @@ h1.app-title {
   font-size: 0.9rem;
   font-weight: 600;
   min-height: 38px;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
 .match-node.win-active {
@@ -1219,7 +1299,10 @@ h1.app-title {
   font-size: 0.7rem;
   font-weight: 800;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.15s ease,
+              border-color 0.15s ease,
+              color 0.15s ease,
+              box-shadow 0.15s ease;
 }
 
 .btn-action-win:hover {
@@ -1259,7 +1342,10 @@ h1.app-title {
   font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.15s ease,
+              color 0.15s ease,
+              border-color 0.15s ease,
+              box-shadow 0.15s ease;
 }
 
 .btn-designate-bye:hover {

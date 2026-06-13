@@ -369,7 +369,7 @@ const quizData = [
     choices: ["2명", "3명", "4명", "아무도 안간다"],
     answerIndex: 1,
     answerText: "2) 3명",
-    explanation: "단기선교 참석 청년: 양희은, 이원영, 정환희"
+    explanation: "단기선교 참석 청년: 양희온, 이원영, 정환희"
   },
   {
     id: 4,
@@ -500,7 +500,7 @@ const quizData = [
 ];
 
 // --- Unison Game (이구동성) Data ---
-const unisonWords = ["밀알교회", "단기선교", "하계수련", "공동의회", "이구동성", "가족오락", "마라당면", "갈릴리홀", "성령충만", "예수사랑"];
+const unisonWords = ["느부갓네살", "사마라아인", "여호와이레", "요한계시록", "갈보리언덕", "여리고성벽", "시몬베드로", "데살로니가", "나아만장군", "야곱의축복"];
 const unisonTelepathy = [
   { q: "짜장면 vs 짬뽕", left: "짜장면", right: "짬뽕" },
   { q: "부먹 vs 찍먹", left: "부먹", right: "찍먹" },
@@ -522,11 +522,9 @@ const quizRevealedQuestions = new Set();
 let quizSelectedChoiceIdx = null;
 
 // Unison State
-let unisonTab = 'word';
+let unisonCurrentIdx = 0;
 let unisonWordArr = [];
-let unisonWordRevealed = [false, false, false, false];
-let unisonTeleIdx = 0;
-let isCountdownRunning = false;
+let unisonWordRevealed = [false, false, false, false, false];
 
 // Balloon Race Sub-Tab State
 let raceTab = 'bracket'; // 'bracket' | 'roulette'
@@ -552,10 +550,8 @@ let btnGotoMenu, btnToggleSound, soundIcon, soundLabel, btnResetAll;
 let menuView, quizView, unisonView, raceView;
 let quizBadge, quizQuestionText, quizChoicesContainer, explanationContainer, explanationText, quizCardContent, questionNavDots;
 let btnPrevQuestion, btnNextQuestion, btnRevealAnswer, btnPlayDrumroll, btnPlayTada;
-let btnTabWord, btnTabTelepathy, unisonWordPane, unisonTelepathyPane;
-let btnRandomWord, btnHideAllSyllables, btnRevealAllSyllables;
-let teleQuestionText, teleChoiceLeft, teleChoiceRight, teleCountdownOverlay, teleCountdownNum;
-let btnPrevTelepathy, btnNextTelepathy, btnStartCountdown;
+let btnHideAllSyllables, btnRevealAllSyllables;
+let btnPrevUnison, btnNextUnison, unisonBadge, unisonNavDots;
 let btnRaceTabBracket, btnRaceTabRoulette;
 let raceBracketPane, raceRoulettePane;
 let raceWinnerModal, raceWinnerName, btnResetRaceWinner;
@@ -595,24 +591,14 @@ function initDOMRefs() {
   btnPlayDrumroll = document.getElementById('btn-play-drumroll');
   btnPlayTada = document.getElementById('btn-play-tada');
 
-  btnTabWord = document.getElementById('btn-tab-word');
-  btnTabTelepathy = document.getElementById('btn-tab-telepathy');
-  unisonWordPane = document.getElementById('unison-word-pane');
-  unisonTelepathyPane = document.getElementById('unison-telepathy-pane');
-
-  btnRandomWord = document.getElementById('btn-random-word');
+  // Unison DOM refs
   btnHideAllSyllables = document.getElementById('btn-hide-all-syllables');
   btnRevealAllSyllables = document.getElementById('btn-reveal-all-syllables');
+  btnPrevUnison = document.getElementById('btn-prev-unison');
+  btnNextUnison = document.getElementById('btn-next-unison');
+  unisonBadge = document.getElementById('unison-badge-id');
+  unisonNavDots = document.getElementById('unison-nav-dots');
 
-  teleQuestionText = document.getElementById('telepathy-question-text');
-  teleChoiceLeft = document.getElementById('telepathy-choice-left');
-  teleChoiceRight = document.getElementById('telepathy-choice-right');
-  teleCountdownOverlay = document.getElementById('telepathy-countdown-overlay');
-  teleCountdownNum = document.getElementById('telepathy-countdown-number');
-
-  btnPrevTelepathy = document.getElementById('btn-prev-telepathy');
-  btnNextTelepathy = document.getElementById('btn-next-telepathy');
-  btnStartCountdown = document.getElementById('btn-start-countdown');
 
   btnRaceTabBracket = document.getElementById('btn-race-tab-bracket');
   btnRaceTabRoulette = document.getElementById('btn-race-tab-roulette');
@@ -657,7 +643,6 @@ function showView(viewName) {
     if (viewName === 'quiz') quizView.style.display = 'flex';
     if (viewName === 'unison') {
       unisonView.style.display = 'flex';
-      initUnisonWord();
     }
     if (viewName === 'race') {
       raceView.style.display = 'flex';
@@ -702,9 +687,8 @@ function setupGlobalControls() {
       setupQuiz();
       
       // Unison reset
-      unisonTeleIdx = 0;
-      initUnisonWord();
-      renderTelepathy();
+      unisonCurrentIdx = 0;
+      loadUnisonWord(0);
       
       // Bracket reset
       resetBracketState();
@@ -728,6 +712,14 @@ function setupQuiz() {
 
 function generateNavDots() {
   questionNavDots.innerHTML = '';
+
+  // Split into two rows: 1~8 (idx 0~7) and 9~end (idx 8~)
+  const firstRowEnd = 8; // first 8 questions
+  const rowWrapper1 = document.createElement('div');
+  rowWrapper1.style.cssText = 'display:flex; flex-wrap:wrap; gap:0.6rem; justify-content:center;';
+  const rowWrapper2 = document.createElement('div');
+  rowWrapper2.style.cssText = 'display:flex; flex-wrap:wrap; gap:0.6rem; justify-content:center;';
+
   quizData.forEach((q, idx) => {
     const isRes = idx >= 15;
     const dot = document.createElement('button');
@@ -739,8 +731,15 @@ function generateNavDots() {
       sounds.playClick();
       navigateQuizTo(idx);
     };
-    questionNavDots.appendChild(dot);
+    if (idx < firstRowEnd) {
+      rowWrapper1.appendChild(dot);
+    } else {
+      rowWrapper2.appendChild(dot);
+    }
   });
+
+  questionNavDots.appendChild(rowWrapper1);
+  questionNavDots.appendChild(rowWrapper2);
   updateQuizNavDots();
 }
 
@@ -802,7 +801,7 @@ function renderQuestion() {
   });
   
   explanationContainer.style.display = 'none';
-  btnRevealAnswer.textContent = '정답 확인 (Space)';
+  btnRevealAnswer.textContent = '정답 확인';
   btnRevealAnswer.classList.remove('active-mode');
   
   if (quizRevealedQuestions.has(quizCurrentIdx)) {
@@ -834,39 +833,94 @@ function selectQuizChoice(idx) {
 }
 
 function revealQuizAnswer() {
+  console.log('[REVEAL] called, quizCurrentIdx=', quizCurrentIdx);
+  console.log('[REVEAL] already revealed?', quizRevealedQuestions.has(quizCurrentIdx));
+
   if (quizRevealedQuestions.has(quizCurrentIdx)) {
+    // Already showing answer → hide it
+    console.log('[REVEAL] hiding answer');
     quizRevealedQuestions.delete(quizCurrentIdx);
-    renderQuestion();
+
+    // Reset UI directly (don't call renderQuestion to avoid side effects)
+    var cards = quizChoicesContainer.querySelectorAll('.choice-card');
+    quizChoicesContainer.classList.remove('revealed');
+    cards.forEach(function(card) {
+      card.classList.remove('correct');
+      card.style.cssText = '';
+    });
+    explanationContainer.style.display = 'none';
+    btnRevealAnswer.textContent = '정답 확인';
+    btnRevealAnswer.classList.remove('active-mode');
+    updateQuizNavDots();
     return;
   }
-  
+
+  // Show answer
+  console.log('[REVEAL] showing answer');
   quizRevealedQuestions.add(quizCurrentIdx);
-  sounds.playCorrect();
-  confetti.burst();
-  applyQuizRevealUI();
+
+  try { sounds.playCorrect(); } catch(e) { console.warn('sound error', e); }
+  try { confetti.burst(); } catch(e) { console.warn('confetti error', e); }
+
+  var q = quizData[quizCurrentIdx];
+  var cards = quizChoicesContainer.querySelectorAll('.choice-card');
+
+  console.log('[REVEAL] q.answerIndex=', q.answerIndex, 'cards.length=', cards.length);
+
+  quizChoicesContainer.classList.add('revealed');
+
+  for (var i = 0; i < cards.length; i++) {
+    var card = cards[i];
+    if (i === q.answerIndex) {
+      card.classList.add('correct');
+      card.style.background = 'rgba(0, 255, 136, 0.12)';
+      card.style.borderColor = 'var(--accent-green)';
+      card.style.boxShadow = '0 0 25px rgba(0,255,136,0.3)';
+      card.style.opacity = '1';
+    } else {
+      card.style.opacity = '0.25';
+      card.style.pointerEvents = 'none';
+    }
+  }
+
+  explanationText.textContent = q.answerText + (q.explanation ? ' — ' + q.explanation : '');
+  explanationContainer.style.display = 'flex';
+  console.log('[REVEAL] explanationContainer display set to:', explanationContainer.style.display);
+
+  btnRevealAnswer.textContent = '정답 가리기';
+  btnRevealAnswer.classList.add('active-mode');
+
+  updateQuizNavDots();
+  console.log('[REVEAL] done');
 }
 
 function applyQuizRevealUI() {
-  const q = quizData[quizCurrentIdx];
-  const cards = quizChoicesContainer.querySelectorAll('.choice-card');
+  // Called from renderQuestion() when revisiting an already-revealed question
+  var q = quizData[quizCurrentIdx];
+  var cards = quizChoicesContainer.querySelectorAll('.choice-card');
+
   quizChoicesContainer.classList.add('revealed');
-  
-  cards.forEach((card, idx) => {
-    card.style.borderColor = '';
-    card.style.background = '';
-    if (idx === q.answerIndex) {
+
+  for (var i = 0; i < cards.length; i++) {
+    var card = cards[i];
+    if (i === q.answerIndex) {
       card.classList.add('correct');
+      card.style.background = 'rgba(0, 255, 136, 0.12)';
+      card.style.borderColor = 'var(--accent-green)';
+      card.style.boxShadow = '0 0 25px rgba(0,255,136,0.3)';
+      card.style.opacity = '1';
     } else {
-      card.classList.remove('correct');
+      card.style.opacity = '0.25';
+      card.style.pointerEvents = 'none';
     }
-  });
-  
-  explanationText.textContent = `${q.answerText} ${q.explanation ? `- ${q.explanation}` : ''}`;
+  }
+
+  explanationText.textContent = q.answerText + (q.explanation ? ' — ' + q.explanation : '');
   explanationContainer.style.display = 'flex';
-  
-  btnRevealAnswer.textContent = '정답 가리기 (Space)';
+
+  btnRevealAnswer.textContent = '정답 가리기';
   btnRevealAnswer.classList.add('active-mode');
-  
+
   updateQuizNavDots();
 }
 
@@ -876,62 +930,92 @@ function navigateQuizTo(idx) {
   renderQuestion();
 }
 
-// --- 2. UNISON GAME MODULE ---
+// --- 2. UNISON GAME MODULE (이구동성 5글자) ---
 function setupUnison() {
-  btnTabWord.onclick = () => toggleUnisonTab('word');
-  btnTabTelepathy.onclick = () => toggleUnisonTab('telepathy');
-
-  btnRandomWord.onclick = pickRandomUnisonWord;
   btnHideAllSyllables.onclick = hideAllSyllables;
   btnRevealAllSyllables.onclick = revealAllSyllables;
 
-  for (let i = 0; i < 4; i++) {
-    const card = document.getElementById(`syllable-card-${i}`);
-    card.onclick = () => toggleSyllableCard(i);
+  btnPrevUnison.onclick = function() { sounds.playClick(); navigateUnison(-1); };
+  btnNextUnison.onclick = function() { sounds.playClick(); navigateUnison(1); };
+
+  for (var i = 0; i < 5; i++) {
+    (function(idx) {
+      var card = document.getElementById('syllable-card-' + idx);
+      if (card) card.onclick = function() { toggleSyllableCard(idx); };
+    })(i);
   }
 
-  btnPrevTelepathy.onclick = () => navigateTelepathy(-1);
-  btnNextTelepathy.onclick = () => navigateTelepathy(1);
-  btnStartCountdown.onclick = triggerTelepathyCountdown;
-  
-  renderTelepathy();
+  generateUnisonNavDots();
+  loadUnisonWord(0);
 }
 
-function toggleUnisonTab(tab) {
-  sounds.playClick();
-  unisonTab = tab;
-  if (tab === 'word') {
-    btnTabWord.classList.add('active-tab');
-    btnTabTelepathy.classList.remove('active-tab');
-    unisonWordPane.style.display = 'flex';
-    unisonTelepathyPane.style.display = 'none';
-  } else {
-    btnTabTelepathy.classList.add('active-tab');
-    btnTabWord.classList.remove('active-tab');
-    unisonTelepathyPane.style.display = 'flex';
-    unisonWordPane.style.display = 'none';
+function generateUnisonNavDots() {
+  unisonNavDots.innerHTML = '';
+
+  var firstRowEnd = 5;
+  var row1 = document.createElement('div');
+  row1.style.cssText = 'display:flex; flex-wrap:wrap; gap:0.6rem; justify-content:center;';
+  var row2 = document.createElement('div');
+  row2.style.cssText = 'display:flex; flex-wrap:wrap; gap:0.6rem; justify-content:center;';
+
+  for (var i = 0; i < unisonWords.length; i++) {
+    (function(idx) {
+      var dot = document.createElement('button');
+      dot.className = 'nav-dot';
+      dot.id = 'unison-nav-dot-' + idx;
+      dot.textContent = idx + 1;
+      dot.title = '문제 ' + (idx + 1);
+      dot.onclick = function() {
+        sounds.playClick();
+        loadUnisonWord(idx);
+      };
+      if (idx < firstRowEnd) {
+        row1.appendChild(dot);
+      } else {
+        row2.appendChild(dot);
+      }
+    })(i);
+  }
+
+  unisonNavDots.appendChild(row1);
+  unisonNavDots.appendChild(row2);
+}
+
+function updateUnisonNavDots() {
+  for (var i = 0; i < unisonWords.length; i++) {
+    var dot = document.getElementById('unison-nav-dot-' + i);
+    if (!dot) continue;
+    if (i === unisonCurrentIdx) {
+      dot.classList.add('active');
+    } else {
+      dot.classList.remove('active');
+    }
   }
 }
 
-function initUnisonWord() {
-  if (unisonWordArr.length === 0) {
-    pickRandomUnisonWord();
-  }
-}
-
-function pickRandomUnisonWord() {
-  sounds.playClick();
-  const word = unisonWords[Math.floor(Math.random() * unisonWords.length)];
+function loadUnisonWord(idx) {
+  unisonCurrentIdx = idx;
+  var word = unisonWords[idx];
   unisonWordArr = word.split('');
-  unisonWordRevealed = [false, false, false, false];
+  unisonWordRevealed = [false, false, false, false, false];
+
+  unisonBadge.textContent = '이구동성 ' + String(idx + 1).padStart(2, '0');
   renderSyllableCards();
+  updateUnisonNavDots();
+}
+
+function navigateUnison(dir) {
+  var next = unisonCurrentIdx + dir;
+  if (next < 0 || next >= unisonWords.length) return;
+  loadUnisonWord(next);
 }
 
 function renderSyllableCards() {
-  for (let i = 0; i < 4; i++) {
-    const card = document.getElementById(`syllable-card-${i}`);
-    const charElem = card.querySelector('.syllable-char');
-    
+  for (var i = 0; i < 5; i++) {
+    var card = document.getElementById('syllable-card-' + i);
+    if (!card) continue;
+    var charElem = card.querySelector('.syllable-char');
+
     if (unisonWordRevealed[i]) {
       card.classList.add('revealed');
       charElem.textContent = unisonWordArr[i] || '?';
@@ -946,7 +1030,7 @@ function toggleSyllableCard(idx) {
   sounds.playClick();
   unisonWordRevealed[idx] = !unisonWordRevealed[idx];
   renderSyllableCards();
-  if (unisonWordRevealed.every(val => val)) {
+  if (unisonWordRevealed.every(function(v) { return v; })) {
     sounds.playTada();
     confetti.burst();
   }
@@ -954,78 +1038,15 @@ function toggleSyllableCard(idx) {
 
 function hideAllSyllables() {
   sounds.playClick();
-  unisonWordRevealed = [false, false, false, false];
+  unisonWordRevealed = [false, false, false, false, false];
   renderSyllableCards();
 }
 
 function revealAllSyllables() {
   sounds.playCorrect();
-  unisonWordRevealed = [true, true, true, true];
+  unisonWordRevealed = [true, true, true, true, true];
   renderSyllableCards();
   confetti.burst();
-}
-
-function renderTelepathy() {
-  const item = unisonTelepathy[unisonTeleIdx];
-  document.getElementById('telepathy-badge-id').textContent = `텔레파시 Q${String(unisonTeleIdx + 1).padStart(2, '0')}`;
-  teleQuestionText.textContent = item.q;
-  teleChoiceLeft.textContent = item.left;
-  teleChoiceRight.textContent = item.right;
-  
-  teleChoiceLeft.classList.remove('countdown-pulse');
-  teleChoiceRight.classList.remove('countdown-pulse');
-}
-
-function navigateTelepathy(dir) {
-  sounds.playClick();
-  unisonTeleIdx = (unisonTeleIdx + dir + unisonTelepathy.length) % unisonTelepathy.length;
-  renderTelepathy();
-}
-
-function triggerTelepathyCountdown() {
-  if (isCountdownRunning) return;
-  isCountdownRunning = true;
-  
-  teleCountdownOverlay.style.display = 'flex';
-  teleChoiceLeft.classList.add('countdown-pulse');
-  teleChoiceRight.classList.add('countdown-pulse');
-  
-  let count = 3;
-  teleCountdownNum.textContent = count;
-  sounds.playBeep(440, 'sine', 0.15);
-  
-  teleCountdownNum.style.animation = 'none';
-  void teleCountdownNum.offsetWidth;
-  teleCountdownNum.style.animation = 'popNum 1s ease-in-out';
-  
-  const timer = setInterval(() => {
-    count--;
-    if (count > 0) {
-      teleCountdownNum.textContent = count;
-      sounds.playBeep(440, 'sine', 0.15);
-      
-      teleCountdownNum.style.animation = 'none';
-      void teleCountdownNum.offsetWidth;
-      teleCountdownNum.style.animation = 'popNum 1s ease-in-out';
-    } else if (count === 0) {
-      teleCountdownNum.textContent = 'GO!';
-      sounds.playBeep(880, 'triangle', 0.4);
-      
-      teleCountdownNum.style.animation = 'none';
-      void teleCountdownNum.offsetWidth;
-      teleCountdownNum.style.animation = 'popNum 1s ease-in-out';
-    } else {
-      clearInterval(timer);
-      teleCountdownOverlay.style.display = 'none';
-      isCountdownRunning = false;
-      
-      teleChoiceLeft.classList.remove('countdown-pulse');
-      teleChoiceRight.classList.remove('countdown-pulse');
-      
-      sounds.playTada();
-      confetti.burst();
-    }
-  }, 1000);
 }
 
 // --- 3. BALLOON RACE MODULE (Bracket & Roulette) ---
@@ -1346,14 +1367,41 @@ function triggerSlotSpin() {
   } while (pickedIdx === lastPickedIdx && slotItems.length > 1);
   lastPickedIdx = pickedIdx;
 
-  // How many full cycles to spin before landing
-  const extraCycles = 10 + Math.floor(Math.random() * 6); // 10~15 cycles
-  const curOffset = getReelCurrentOffset(reelTool);
-  const targetOffset = curOffset + extraCycles * slotItems.length * SLOT_ITEM_H + pickedIdx * SLOT_ITEM_H;
+  // FIXED APPROACH: always start from the same known "safe zone" in the middle
+  // This prevents the offset from accumulating across spins
+  const repeats = 40;
+  const safeStartCycle = Math.floor(repeats * 0.35); // start at 35% through the repeats
+  const safeStartOffset = safeStartCycle * slotItems.length * SLOT_ITEM_H;
 
-  // Fast scroll with smooth deceleration
-  reelTool.style.transition = `transform 2.8s cubic-bezier(0.08, 0.82, 0.17, 1)`;
-  reelTool.style.transform = `translateY(-${targetOffset}px)`;
+  // Reset reel position to safeStart instantly (no transition)
+  reelTool.style.transition = 'none';
+  reelTool.style.transform = `translateY(-${safeStartOffset}px)`;
+
+  // Force reflow so the instant reset takes effect before animation begins
+  void reelTool.offsetHeight;
+
+  // Calculate landing: spin 8-12 full cycles from safe start, then land on target
+  const spinCycles = 8 + Math.floor(Math.random() * 5);
+
+  // targetOffset places the strip so that:
+  //   top of viewport   = item at (safeStart + spinCycles*N + pickedIdx - 1)
+  //   CENTER of viewport = item at (safeStart + spinCycles*N + pickedIdx)  ← this is what user sees
+  //   bottom of viewport = item at (safeStart + spinCycles*N + pickedIdx + 1)
+  // Subtracting SLOT_ITEM_H shifts the selected item into the CENTER row
+  const targetOffset = safeStartOffset
+    + spinCycles * slotItems.length * SLOT_ITEM_H
+    + pickedIdx * SLOT_ITEM_H
+    - SLOT_ITEM_H; // ← center alignment: push picked item from top to middle slot
+
+  // The DOM 1-based child index of the CENTER item
+  // Center item strip-index = (targetOffset / H) + 1, so nth-child = that + 1
+  const targetChildIndex = Math.round(targetOffset / SLOT_ITEM_H) + 2;
+
+  // Animate spin
+  requestAnimationFrame(() => {
+    reelTool.style.transition = `transform 2.8s cubic-bezier(0.08, 0.82, 0.17, 1)`;
+    reelTool.style.transform = `translateY(-${targetOffset}px)`;
+  });
 
   // Tick sounds during spin
   let tickCount = 0;
@@ -1368,107 +1416,29 @@ function triggerSlotSpin() {
     clearInterval(tickInterval);
     isSlotSpinning = false;
 
-    // Highlight the landed item
+    // Clear old highlights
     const allItems = reelTool.querySelectorAll('.picker-item');
     allItems.forEach(el => el.classList.remove('picker-item-active'));
-    const landedEl = reelTool.querySelector(`.picker-item:nth-child(${Math.round(targetOffset / SLOT_ITEM_H) + 1})`);
+
+    // Highlight landed item
+    const landedEl = reelTool.querySelector(`.picker-item:nth-child(${targetChildIndex})`);
     if (landedEl) landedEl.classList.add('picker-item-active');
 
     // Show result
     if (rouletteResultDisplay) {
       rouletteResultDisplay.textContent = `🎯 ${slotItems[pickedIdx]}`;
       rouletteResultDisplay.style.opacity = '1';
-      void rouletteResultDisplay.offsetWidth; // force reflow
+      void rouletteResultDisplay.offsetWidth;
       rouletteResultDisplay.classList.add('picker-result-pop');
     }
 
     sounds.playTada();
     confetti.burst();
-  }, 2800);
+  }, 2850);
 }
 
 
-// --- Keyboard Shortcuts Maps ---
-function setupKeyboardShortcuts() {
-  document.addEventListener('keydown', (e) => {
-    if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
-
-    if (currentView === 'quiz') {
-      switch (e.code) {
-        case 'Space':
-          e.preventDefault();
-          revealQuizAnswer();
-          break;
-        case 'ArrowLeft':
-          e.preventDefault();
-          sounds.playClick();
-          navigateQuizTo(quizCurrentIdx - 1);
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          sounds.playClick();
-          navigateQuizTo(quizCurrentIdx + 1);
-          break;
-        case 'Digit1':
-        case 'Numpad1':
-          selectQuizChoice(0);
-          break;
-        case 'Digit2':
-        case 'Numpad2':
-          selectQuizChoice(1);
-          break;
-        case 'Digit3':
-        case 'Numpad3':
-          selectQuizChoice(2);
-          break;
-        case 'Digit4':
-        case 'Numpad4':
-          selectQuizChoice(3);
-          break;
-        case 'KeyA':
-          selectQuizChoice(0);
-          break;
-        case 'KeyB':
-        case 'KeyX':
-          selectQuizChoice(1);
-          break;
-      }
-    } 
-    
-    else if (currentView === 'unison') {
-      if (unisonTab === 'word') {
-        if (['Digit1', 'Numpad1', 'Digit2', 'Numpad2', 'Digit3', 'Numpad3', 'Digit4', 'Numpad4'].includes(e.code)) {
-          const num = parseInt(e.key) - 1;
-          if (num >= 0 && num < 4) toggleSyllableCard(num);
-        }
-      } else if (unisonTab === 'telepathy') {
-        switch (e.code) {
-          case 'Space':
-            e.preventDefault();
-            triggerTelepathyCountdown();
-            break;
-          case 'ArrowLeft':
-            e.preventDefault();
-            navigateTelepathy(-1);
-            break;
-          case 'ArrowRight':
-            e.preventDefault();
-            navigateTelepathy(1);
-            break;
-        }
-      }
-    } 
-    
-    else if (currentView === 'race') {
-      if (raceTab === 'roulette') {
-        if (e.code === 'Space') {
-          e.preventDefault();
-          triggerSlotSpin();
-        }
-      }
-    }
-  });
-}
+// Keyboard shortcuts removed — button clicks only
 
 // --- Dynamic Initialization Bootstrap ---
 function init() {
@@ -1478,7 +1448,7 @@ function init() {
   setupUnison();
   setupRace();
   setupGlobalControls();
-  setupKeyboardShortcuts();
+  // keyboard shortcuts removed
 }
 
 // Bootstrap check
